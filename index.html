@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <title>Google</title>
+   <link rel="icon" href="G:\RPG\Ecos da Desolação\Browser\backend\img\logogoogle.png" type="image/x-icon">
+    <link rel="stylesheet" href="G:\RPG\Ecos da Desolação\Browser\backend\style.css" /> <!-- Ajuste o path para o seu CSS -->
+    <script>
+        // Índice de "sites" (funcionais e de lore). Adicione mais objetos para expandir.
+        const googleIndex = [
+            {
+                id: 1,
+                title: "Ecos da Desolação - Mapa Interativo",
+                description: "Ferramenta interativa para navegar pela Cidade Desolada. Inclui pontos de interesse e perigos.",
+                content: "Mapa funcional com zoom e marcadores para locais da campanha. Use para planejar sessões ou rastrear NPCs. Desenvolvido por fãs do RPG Ecos da Desolação.",
+                keywords: ["mapa", "cidade", "echo valley", "echo", "valley", "localizar"],
+                secretKeywords: [], 
+                url: "G:\RPG\Ecos da Desolação\Browser\frontend\src\mapa.html"
+            },
+
+            {
+                id: 2,
+                title: "Arquivo de Relíquias",
+                description: "Catálogo de artefatos místicos do universo Ecos da Desolação.",
+                content: "Página com descrições detalhadas do Eco Primordial e outros itens. Inclui imagens e dicas para mestres. [LORE] O Eco Primordial é um cristal que revela o apocalipse.",
+                keywords: ["relíquias", "echo", "primordial", "artefatos"],
+                secretKeywords: [],
+                url: "paginas/arquivo-reliquias.html" // Página de lore
+            },
+
+            {
+                id: 3,
+                title: "Diário do Errante",
+                description: "Blog secreto de um sobrevivente na Floresta Esquecida. Apenas para iniciados.",
+                content: "Relatos de um NPC misterioso. Contém pistas sobre o Portal Eterno, mas exige decifrar enigmas. [LORE] A floresta distorce o tempo, cuidado com os sussurros.",
+                keywords: ["diário", "floresta", "esquecida"],
+                secretKeywords: ["sussurro"], // Só aparece se digitar "sussurro"
+                url: null // Sem página, só preview
+            },
+
+            {
+                id: 4,
+                title: "Gerador de NPCs",
+                description: "Ferramenta para criar personagens aleatórios para suas sessões de RPG.",
+                content: "Gere nomes, traços e motivações para NPCs em Ecos da Desolação. Inclui opções para aliados, inimigos e neutros. Perfeito para mestres.",
+                keywords: ["npc", "gerador", "personagem"],
+                secretKeywords: [],
+                url: "paginas/gerador-npc.html" // Página funcional
+            }
+        
+           //  {
+              //   id: 5,
+             //    title: "Calculadora de Combate",
+             //    description: "Ferramenta para calcular danos e resistências em Ecos da Desolação.",
+             //    content: "Insira atributos de inimigos e jogadores para simular combates. Inclui regras personalizadas do RPG.",
+             //    keywords: ["calculadora", "combate", "regras"],
+             //   secretKeywords: [],
+             //   url: "paginas/calculadora-combate.html"
+            // }
+            // {
+            //    id: 6,
+             //   title: "Segredo do Traidor",
+             //    description: "Página oculta sobre o deus traidor. Apenas para mestres.",
+            //    content: "Revelações do lore: o apocalipse foi causado por um deus traidor. Use para plot twists.",
+             //   keywords: [],
+            //   secretKeywords: ["traidor", "mestre"],
+           //     url: null
+             //}
+        ];
+
+        // Função de busca: Simula o Google, procurando por palavras-chave
+        function performSearch(query) {
+            const lowerQuery = query.toLowerCase().trim();
+            let results = [];
+
+            // Busca normal: filtra por keywords, título ou descrição
+            googleIndex.forEach(item => {
+                const matches = item.keywords.some(kw => lowerQuery.includes(kw)) ||
+                                item.title.toLowerCase().includes(lowerQuery) ||
+                                item.description.toLowerCase().includes(lowerQuery);
+                if (matches) {
+                    results.push(item);
+                }
+            });
+
+            // Buscas secretas: verifica secretKeywords
+            googleIndex.forEach(item => {
+                if (item.secretKeywords.length > 0 && item.secretKeywords.some(sk => lowerQuery.includes(sk))) {
+                    results.push({ ...item, isSecret: true }); // Marca como secreto
+                }
+            });
+
+            // Remove duplicatas
+            results = results.filter((item, index, self) => 
+                index === self.findIndex(t => t.id === item.id)
+            );
+
+            // Ordena por relevância (número de matches nas keywords)
+            results.sort((a, b) => {
+                const aScore = a.keywords.filter(kw => lowerQuery.includes(kw)).length;
+                const bScore = b.keywords.filter(kw => lowerQuery.includes(kw)).length;
+                return bScore - aScore;
+            });
+
+            return results;
+        }
+
+        // Função para exibir resultados no estilo Google 90s
+        function displayResults(results, query) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML = `<p>No results found for "${query}". Try terms like 'mapa' or 'sussurro'.</p>`;
+                return;
+            }
+
+            let html = `<p>Found ${results.length} results for "${query}"</p>`;
+            results.forEach(result => {
+                const secretBadge = result.isSecret ? '<span style="color: red; font-weight: bold;">[HIDDEN]</span>' : '';
+                html += `
+                    <div class="result-item">
+                        <a href="${result.url || '#'}" ${!result.url ? 'onclick="return false;"' : ''} class="result-title">${result.title} ${secretBadge}</a>
+                        <p class="description">${result.description}</p>
+                        <p class="content-preview">${result.content.substring(0, 150)}...</p>
+                        ${result.url ? `<span class="result-url">${result.url}</span>` : ''}
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+
+        // Event listeners para busca
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.querySelector('.search-form');
+            const searchInput = document.getElementById('search');
+
+            searchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const query = searchInput.value;
+                if (!query) return;
+
+                const results = performSearch(query);
+                displayResults(results, query);
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            });
+
+            // Busca em tempo real (opcional, ao digitar)
+            searchInput.addEventListener('input', function() {
+                if (this.value.length > 2) {
+                    const results = performSearch(this.value);
+                    displayResults(results, this.value);
+                } else {
+                    document.getElementById('results').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo Google clássico -->
+        <h1><img src="G:\RPG\Ecos da Desolação\Browser\backend\img\googleLOGO.png" alt="Google" style="width: 272px; height: 92px;"></h1> <!-- Ajuste o path -->
+
+        <!-- Form de busca -->
+        <form class="search-form" action="#" method="get">
+            <label for="search">Search the web using Google!</label><br />
+            <input type="text" id="search" name="q" placeholder="Search Google" />
+            <br/>
+            <input type="submit" value="Google Search" />
+            <input type="submit" value="I'm feeling lucky" name="btnI" onclick="alert('Feeling lucky? The echoes guide you... Try a search!'); return false;" />
+        </form>
+
+        <!-- Seção de resultados -->
+        <div id="results" style="display: none; margin-top: 20px; text-align: left;"></div>
+
+        <!-- Painéis de info no estilo Google 90s -->
+        <div class="info-section">
+            <div class="left-panel">
+                <p><strong>Special Searches</strong></p>
+                <p><a href="#" onclick="alert('Search for campaign tools!');">Campaign Tools</a></p>
+                <p><a href="#" onclick="alert('Search for hidden lore!');">Secret Archives</a></p>
+            </div>
+            <div class="middle-panel">
+                <p><a href="#" onclick="alert('Help with using the search engine.');">Help</a></p>
+                <p><a href="#" onclick="alert('About Ecos da Desolação RPG.');">About</a></p>
+                <p><a href="#" onclick="alert('Campaign resources and info.');">Resources</a></p>
+                <p><a href="#" onclick="alert('Custom Google logos for the RPG.');">Google Logos</a></p>
+            </div>
+            <div class="right-panel">
+                <p><strong>Get Google!</strong></p>
+                <p>updates monthly:</p>
+                <form onsubmit="alert('Subscribed! New sites and secrets monthly.'); return false;">
+                    <input type="email" placeholder="your e-mail" />
+                    <input type="submit" value="Subscribe" />
+                </form>
+                <a href="#" onclick="alert('Old campaign archives.');">Archive</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>Copyright ©1998 Google Inc.</p>
+        </footer>
+    </div>
+
+    <!-- CSS adicional para resultados (adicione ao seu style.css) -->
+    <style>
+        .result-item {
+            margin-bottom: 15px;
+            padding: 5px;
+        }
+        .result-title {
+            font-size: 16px;
+            color: #1a2dab;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .description {
+            font-size: 13px;
+            color: #006621;
+            margin: 2px 0;
+        }
+        .content-preview {
+            font-size: 13px;
+            color: #000;
+            line-height: 1.4;
+        }
+        .result-url {
+            font-size: 12px;
+            color: #006621;
+        }
+        #results p {
+            font-size: 14px;
+            color: #000;
+        }
+    </style>
+</body>
+</html>
