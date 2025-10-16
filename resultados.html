@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+     <title> "Variavel nome"</title>
+   <link rel="icon" href="G:\RPG\Ecos da Desolação\Browser\backend\img\logogoogle.png" type="image/x-icon">
+   
+    <link rel="stylesheet" href="G:\RPG\Ecos da Desolação\Browser\backend\style.css">
+</head>
+<body>
+    <div class="search-results-container">
+        <h1 class="search-logo">
+        <!-- Logo Google clássico -->
+        <h1><img src="G:\RPG\Ecos da Desolação\Browser\backend\img\googleLOGO.png" alt="Google" style="width: 272px; height: 92px;"></h1> <!-- Ajuste o path -->
+
+        </h1>
+        <form class="search-results-bar" action="/resultados" method="get">
+            <input type="text" name="q" value="{{ request.args.get('q') }}" />
+            <button type="submit">Buscar</button>
+        </form>
+        <div class="search-options-bar">
+            <span class="opt-selected">Tudo</span>
+            <span>Imagens</span>
+            <span>Vídeos</span>
+            <span>Notícias</span>
+            <span>Mais</span>
+            <span>Ferramentas</span>
+        </div>
+        <p class="search-result-info">Resultados para: <strong>{{ request.args.get('q') }}</strong></p>
+        <div id="resultados"></div>
+        <div class="nav-links">
+            <a href="/">Voltar</a> | <a href="/indice">Ver todos os sites</a>
+        </div>
+    </div>
+    <script>
+        const q = new URLSearchParams(window.location.search).get('q');
+        fetch(`/buscar?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+                const div = document.getElementById('resultados');
+                if (data.length === 0) {
+                    div.innerHTML = '<p>Nenhum resultado.</p>';
+                    return;
+                }
+                data.forEach(site => {
+                    const secret = site.secret_keywords && site.secret_keywords.includes(q) ? ' [SEGREDO]' : '';
+                    div.innerHTML += `
+                        <div class="search-result-item">
+                            <span class="search-result-dot"></span>
+                            <a class="search-result-title" href="/${site.url}">${site.title}${secret}</a>
+                            <div class="search-result-desc">${site.description}</div>
+                            <div class="search-result-url">/${site.url}</div>
+                        </div>
+                    `;
+                });
+            });
+    </script>
+</body>
+</html>
